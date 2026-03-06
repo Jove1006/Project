@@ -1,0 +1,36 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.git.backup-*/
+
+# Logs
+*.log
+*.out
+*.err
+
+# Local env
+.env
+.env.*
+
+# Rust
+target/
+Cargo.lock
+
+# Frontend
+node_modules/
+dist/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+
+# Runtime data / local services
+minio-data/
+postgresql/
+minio.exe
+
+# Local generated assets
+medical-server/static/assets/

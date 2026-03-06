@@ -1,0 +1,588 @@
+{% extends "base.html" %}
+
+{% block title %}{{ record.record_no }} — 医学数据管理系统{% endblock %}
+
+{% block topbar %}
+  <a href="/" class="btn btn-ghost btn-icon btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <span class="topbar-breadcrumb">
+    <a href="/" style="color:#9ca3af">记录列表</a>
+    &nbsp;/&nbsp;<span>{{ record.record_no }}</span>
+  </span>
+  <div style="flex:1"></div>
+
+  <!-- 查看模式按钮 -->
+  <div id="view-actions" style="display:flex; gap:8px">
+    <button class="btn btn-edit btn-sm" onclick="enterEditMode()">
+      <i class="bi bi-pencil"></i> 编辑
+    </button>
+    <button class="btn btn-delete btn-sm" onclick="document.getElementById('modal-delete').classList.add('open')">
+      <i class="bi bi-trash"></i> 删除记录
+    </button>
+  </div>
+
+  <!-- 编辑模式按钮 -->
+  <div id="edit-actions" style="display:none; gap:8px">
+    <button class="btn btn-default btn-sm" onclick="cancelEdit()">
+      <i class="bi bi-x-lg"></i> 取消
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('edit-form').requestSubmit()">
+      <i class="bi bi-check-lg"></i> 保存修改
+    </button>
+  </div>
+{% endblock %}
+
+{% block content %}
+
+  <style>
+    /* 整体放大图标 */
+    .topbar .btn i.bi                    { font-size: 18px; }
+    .data-table td > i.bi               { font-size: 18px; vertical-align: middle; }
+    .data-table .btn-icon i.bi           { font-size: 17px; }
+    .data-table .btn-icon                { padding: 6px; }
+    .tabs .tab .badge                    { font-size: 12.5px; }
+    #upload-btn i.bi                     { font-size: 16px; }
+    #model-gallery-btn i.bi              { font-size: 16px; }
+    .empty-state .icon i.bi              { font-size: 44px; }
+    .modal-header .btn i.bi              { font-size: 18px; }
+    .modal-body i.bi                     { font-size: 17px; }
+    .upload-zone .icon i.bi              { font-size: 28px; }
+  </style>
+
+  <!-- 验证错误提示横幅 -->
+  <div class="validation-banner" id="val-banner">
+    <i class="bi bi-exclamation-circle-fill" style="font-size:16px;flex-shrink:0"></i>
+    <div><strong>请修正以下必填项：</strong><ul id="val-list"></ul></div>
+  </div>
+
+  <!-- 基本信息卡片 -->
+  <div class="card" style="padding:22px; margin-bottom:16px">
+
+    <!-- 查看模式 -->
+    <div id="view-section">
+      <div class="section-title">基本信息</div>
+      <div class="detail-grid">
+        <div class="detail-cell">
+          <div class="label">记录编号</div>
+          <div class="value"><span class="record-code" style="font-size:13.5px">{{ record.record_no }}</span></div>
+        </div>
+        <div class="detail-cell">
+          <div class="label">检查日期</div>
+          <div class="value">{{ record_date_str }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="label">所属医院</div>
+          <div class="value">{{ hospital_name }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="label">检查部位</div>
+          <div class="value"><span class="part-badge part-{{ part_code }}">{{ part_name }}</span></div>
+        </div>
+        <div class="detail-cell" style="grid-column:1/-1">
+          <div class="label">病例描述</div>
+          <div class="value" style="color:#6b7280; font-weight:400; line-height:1.6">
+            {% if record.description %}{{ record.description }}{% else %}<span style="color:#d1d5db">暂无描述</span>{% endif %}
+          </div>
+        </div>
+        <div class="detail-cell">
+          <div class="label">创建时间</div>
+          <div class="value" style="font-size:12.5px; color:#9ca3af; font-weight:400">{{ created_at_str }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="label">最后更新</div>
+          <div class="value" style="font-size:12.5px; color:#9ca3af; font-weight:400">{{ updated_at_str }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑模式 -->
+    <div id="edit-section" style="display:none">
+      <div class="section-title">修改基本信息</div>
+
+      <form id="edit-form" action="/records/{{ record.record_no }}/{{ record.short_code }}/update" method="POST" novalidate>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px">
+
+          <div class="form-group" id="fg-date" style="margin-bottom:0">
+            <label class="form-label">检查日期 <span class="required">*</span></label>
+            <div class="date-group">
+              <select class="select" id="sel-year" name="year">
+                {% for y in range(start=2020, end=2031) %}
+                <option value="{{ y }}"{% if y == record.year %} selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+              </select>
+              <span class="date-sep">年</span>
+              <select class="select" id="sel-month" name="month" style="max-width:72px">
+                {% for m in range(start=1, end=13) %}
+                <option value="{{ m }}"{% if m == record.month %} selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+              </select>
+              <span class="date-sep">月</span>
+              <select class="select" id="sel-day" name="day" style="max-width:72px">
+                {% for d in range(start=1, end=32) %}
+                <option value="{{ d }}"{% if d == record.day %} selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+              </select>
+              <span class="date-sep">日</span>
+            </div>
+            <p class="form-error hidden" id="err-date"><i class="bi bi-exclamation-circle"></i> 请选择完整的日期</p>
+          </div>
+
+          <div class="form-group" id="fg-hospital" style="margin-bottom:0">
+            <label class="form-label">所属医院 <span class="required">*</span></label>
+            <select class="select" id="sel-hospital" name="hospital_id">
+              <option value="">── 请选择医院 ──</option>
+              {% for h in hospitals %}
+              <option value="{{ h.id }}"{% if h.id == record.hospital_id %} selected{% endif %}>{{ h.hospital_name }}</option>
+              {% endfor %}
+            </select>
+            <p class="form-error hidden" id="err-hospital"><i class="bi bi-exclamation-circle"></i> 请选择所属医院</p>
+          </div>
+
+          <div class="form-group" id="fg-part" style="margin-bottom:0">
+            <label class="form-label">检查部位 <span class="required">*</span></label>
+            <select class="select" id="sel-part" name="body_part_id">
+              <option value="">── 请选择部位 ──</option>
+              {% for bp in body_parts %}
+              <option value="{{ bp.id }}"{% if bp.id == record.body_part_id %} selected{% endif %}>{{ bp.part_name }} ({{ bp.part_code }})</option>
+              {% endfor %}
+            </select>
+            <p class="form-error hidden" id="err-part"><i class="bi bi-exclamation-circle"></i> 请选择检查部位</p>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1; margin-bottom:0">
+            <label class="form-label">病例描述</label>
+            <textarea class="textarea" name="description" rows="4"
+              placeholder="请输入疾病的具体症状、诊断信息、手术记录等…">{{ record.description }}</textarea>
+            <p class="form-hint">可输入疾病症状、诊断结论、手术方案等（非必填）</p>
+          </div>
+
+        </div>
+      </form>
+    </div>
+
+  </div><!-- /基本信息 -->
+
+  <!-- 关联文件 -->
+  <div class="card" style="overflow:hidden; margin-bottom:16px">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:0 18px; border-bottom:1px solid #e8eaed">
+      <div class="tabs" style="border-bottom:none; padding:0">
+        <div class="tab active" onclick="switchTab('image', this)">
+          <span class="badge badge-image" style="margin-right:5px">图像</span>{{ image_count }}
+        </div>
+        <div class="tab" onclick="switchTab('model', this)">
+          <span class="badge badge-model" style="margin-right:5px">模型</span>{{ model_count }}
+        </div>
+        <div class="tab" onclick="switchTab('annot', this)">
+          <span class="badge badge-annot" style="margin-right:5px">标注</span>{{ annotation_count }}
+        </div>
+        <div class="tab" onclick="switchTab('report', this)">
+          <span class="badge badge-report" style="margin-right:5px">报告</span>{{ report_count }}
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px">
+        <a href="/viewer/?record_no={{ record.record_no }}"
+           class="btn btn-default btn-sm" id="model-gallery-btn"
+           style="display:none"
+           title="展示目录下所有 STL 模型">
+          <i class="bi bi-grid-3x3-gap"></i> 模型文件展示
+        </a>
+        <button class="btn btn-primary btn-sm" id="upload-btn" onclick="showUploadModal()">
+          <i class="bi bi-plus"></i> 上传文件
+        </button>
+      </div>
+    </div>
+
+    <!-- 图像 Tab -->
+    <div class="tab-content active" id="tab-image">
+      {% if image_files %}
+      <table class="data-table">
+        <thead><tr><th>文件名</th><th>格式</th><th>大小</th><th>上传时间</th><th width="90">操作</th></tr></thead>
+        <tbody>
+          {% for f in image_files %}
+          <tr>
+            <td><i class="bi bi-file-earmark-image" style="color:#2563eb; margin-right:6px"></i>{{ f.original_name }}</td>
+            <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">{{ f.file_extension }}</span></td>
+            <td style="color:#6b7280">{{ f.file_size_str }}</td>
+            <td style="color:#9ca3af; font-size:12px">{{ f.upload_time_str }}</td>
+            <td><div class="btn-group">
+              <a href="/records/{{ record.record_no }}/files/{{ f.id }}/download" class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></a>
+              <button class="btn btn-delete btn-icon btn-sm" title="删除文件" onclick="confirmDeleteFile({{ f.id }}, '{{ f.original_name }}')"><i class="bi bi-trash"></i></button>
+            </div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon"><i class="bi bi-file-earmark-medical"></i></div><p>暂无图像文件</p></div>
+      {% endif %}
+    </div>
+
+    <!-- 模型 Tab -->
+    <div class="tab-content" id="tab-model">
+      {% if model_files %}
+      <table class="data-table">
+        <thead><tr><th>文件名</th><th>格式</th><th>大小</th><th>上传时间</th><th width="120">操作</th></tr></thead>
+        <tbody>
+          {% for f in model_files %}
+          <tr data-model-color="{% if f.color_hex %}{{ f.color_hex }}{% else %}#FFFFFF{% endif %}">
+            <td><i class="bi bi-box" style="color:#16a34a; margin-right:6px"></i>{{ f.original_name }}</td>
+            <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">{{ f.file_extension }}</span></td>
+            <td style="color:#6b7280">{{ f.file_size_str }}</td>
+            <td style="color:#9ca3af; font-size:12px">{{ f.upload_time_str }}</td>
+            <td><div class="btn-group">
+              <button class="btn btn-ghost btn-icon btn-sm color-pick-btn" title="设置颜色" data-file-id="{{ f.id }}">
+                <i class="bi bi-palette" style="color:{% if f.color_hex %}{{ f.color_hex }}{% else %}#6366f1{% endif %}"></i>
+              </button>
+              <a href="/records/{{ record.record_no }}/files/{{ f.id }}/download" class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></a>
+              <button class="btn btn-delete btn-icon btn-sm" title="删除文件" onclick="confirmDeleteFile({{ f.id }}, '{{ f.original_name }}')"><i class="bi bi-trash"></i></button>
+            </div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon"><i class="bi bi-box"></i></div><p>暂无模型文件</p></div>
+      {% endif %}
+    </div>
+
+    <!-- 标注 Tab -->
+    <div class="tab-content" id="tab-annot">
+      {% if annotation_files %}
+      <table class="data-table">
+        <thead><tr><th>文件名</th><th>格式</th><th>大小</th><th>上传时间</th><th width="90">操作</th></tr></thead>
+        <tbody>
+          {% for f in annotation_files %}
+          <tr>
+            <td><i class="bi bi-tags" style="color:#d97706; margin-right:6px"></i>{{ f.original_name }}</td>
+            <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">{{ f.file_extension }}</span></td>
+            <td style="color:#6b7280">{{ f.file_size_str }}</td>
+            <td style="color:#9ca3af; font-size:12px">{{ f.upload_time_str }}</td>
+            <td><div class="btn-group">
+              <a href="/records/{{ record.record_no }}/files/{{ f.id }}/download" class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></a>
+              <button class="btn btn-delete btn-icon btn-sm" title="删除文件" onclick="confirmDeleteFile({{ f.id }}, '{{ f.original_name }}')"><i class="bi bi-trash"></i></button>
+            </div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon"><i class="bi bi-tags"></i></div><p>暂无标注文件</p></div>
+      {% endif %}
+    </div>
+
+    <!-- 报告 Tab -->
+    <div class="tab-content" id="tab-report">
+      {% if report_files %}
+      <table class="data-table">
+        <thead><tr><th>文件名</th><th>格式</th><th>大小</th><th>上传时间</th><th width="90">操作</th></tr></thead>
+        <tbody>
+          {% for f in report_files %}
+          <tr>
+            <td><i class="bi bi-file-text" style="color:#7c3aed; margin-right:6px"></i>{{ f.original_name }}</td>
+            <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">{{ f.file_extension }}</span></td>
+            <td style="color:#6b7280">{{ f.file_size_str }}</td>
+            <td style="color:#9ca3af; font-size:12px">{{ f.upload_time_str }}</td>
+            <td><div class="btn-group">
+              <a href="/records/{{ record.record_no }}/files/{{ f.id }}/download" class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></a>
+              <button class="btn btn-delete btn-icon btn-sm" title="删除文件" onclick="confirmDeleteFile({{ f.id }}, '{{ f.original_name }}')"><i class="bi bi-trash"></i></button>
+            </div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon"><i class="bi bi-file-text"></i></div><p>暂无报告文件</p></div>
+      {% endif %}
+    </div>
+
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- 删除记录 Modal -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">确认删除记录</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-delete')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0; font-size:13.5px; color:#374151">
+        确定要删除记录 <span class="record-code">{{ record.record_no }}</span> 及其所有关联文件吗？
+      </p>
+      <p style="margin:10px 0 0; font-size:12px; color:#ef4444">
+        <i class="bi bi-exclamation-triangle"></i> 此操作将同时删除 MinIO 存储中的 {{ total_file_count }} 个文件，不可恢复。
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-delete')">取消</button>
+      <form method="POST" action="/records/{{ record.record_no }}/{{ record.short_code }}/delete" style="display:inline">
+        <button type="submit" class="btn btn-danger">确认删除</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 删除文件 Modal -->
+<div class="modal-overlay" id="modal-delete-file">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">确认删除文件</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-delete-file')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0; font-size:13.5px; color:#374151">
+        确定要删除文件 <strong id="del-file-name"></strong> 吗？
+      </p>
+      <p style="margin:10px 0 0; font-size:12px; color:#ef4444">
+        <i class="bi bi-exclamation-triangle"></i> 此操作同时删除 MinIO 中的实际文件，不可恢复。
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-delete-file')">取消</button>
+      <form id="del-file-form" method="POST" style="display:inline">
+        <button type="submit" class="btn btn-danger">确认删除</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 上传文件 Modal -->
+<div class="modal-overlay" id="modal-upload">
+  <div class="modal-box" style="width:500px">
+    <div class="modal-header">
+      <span class="modal-title" id="upload-modal-title">上传图像文件</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-upload')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-meta" style="margin-bottom:12px" id="upload-modal-meta"></div>
+      <div class="upload-zone" id="modal-zone" onclick="document.getElementById('modal-file-input').click()">
+        <span class="icon"><i class="bi bi-cloud-arrow-up"></i></span>
+        <div style="font-size:13px">点击或拖入文件</div>
+        <div class="hint">支持多文件同时上传</div>
+      </div>
+      <input type="file" id="modal-file-input" multiple style="display:none" onchange="handleModalFiles(this)">
+      <div class="upload-progress-wrap" id="modal-file-list" style="margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-upload')">取消</button>
+      <button class="btn btn-primary" id="modal-upload-btn" onclick="doModalUpload()">开始上传</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const recordNo        = '{{ record.record_no }}';
+  const recordShortCode = '{{ record.short_code }}';
+
+  // ── 详情 / 编辑 切换 ─────────────────────────────────────────────────────
+
+  function enterEditMode() {
+    document.getElementById('view-section').style.display  = 'none';
+    document.getElementById('edit-section').style.display  = '';
+    document.getElementById('view-actions').style.display  = 'none';
+    document.getElementById('edit-actions').style.display  = 'flex';
+    document.getElementById('val-banner').classList.remove('show');
+  }
+
+  function cancelEdit() {
+    document.getElementById('edit-section').style.display  = 'none';
+    document.getElementById('view-section').style.display  = '';
+    document.getElementById('edit-actions').style.display  = 'none';
+    document.getElementById('view-actions').style.display  = 'flex';
+    document.getElementById('val-banner').classList.remove('show');
+    ['fg-date','fg-hospital','fg-part'].forEach(id => document.getElementById(id).classList.remove('has-error'));
+    ['err-date','err-hospital','err-part'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  }
+
+  document.getElementById('edit-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const errs = [];
+    ['fg-date','fg-hospital','fg-part'].forEach(id => document.getElementById(id).classList.remove('has-error'));
+    ['err-date','err-hospital','err-part'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+    if (!document.getElementById('sel-year').value || !document.getElementById('sel-month').value || !document.getElementById('sel-day').value) {
+      document.getElementById('fg-date').classList.add('has-error');
+      document.getElementById('err-date').classList.remove('hidden');
+      errs.push('请选择完整的检查日期');
+    }
+    if (!document.getElementById('sel-hospital').value) {
+      document.getElementById('fg-hospital').classList.add('has-error');
+      document.getElementById('err-hospital').classList.remove('hidden');
+      errs.push('请选择所属医院');
+    }
+    if (!document.getElementById('sel-part').value) {
+      document.getElementById('fg-part').classList.add('has-error');
+      document.getElementById('err-part').classList.remove('hidden');
+      errs.push('请选择检查部位');
+    }
+
+    const banner = document.getElementById('val-banner');
+    if (errs.length) {
+      document.getElementById('val-list').innerHTML = errs.map(m => `<li>${m}</li>`).join('');
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+      this.submit();
+    }
+  });
+
+  // ?edit=1 自动进入编辑模式
+  if (new URLSearchParams(location.search).get('edit') === '1') {
+    enterEditMode();
+    history.replaceState(null, '', location.pathname);
+  }
+
+  // Flash 消息
+  (function() {
+    const msgMap = {
+      updated:      '记录信息已更新',
+      file_deleted: '文件已删除',
+      file_uploaded: '文件上传成功',
+    };
+    const msg = new URLSearchParams(location.search).get('msg');
+    if (msg && msgMap[msg]) {
+      const flash = document.getElementById('flash');
+      document.getElementById('flash-text').textContent = msgMap[msg];
+      document.getElementById('flash-icon').className = 'bi bi-check-circle-fill';
+      flash.className = 'flash success';
+      flash.style.display = 'flex';
+      setTimeout(() => { flash.style.display = 'none'; }, 3000);
+      history.replaceState(null, '', location.pathname);
+    }
+  })();
+
+  // ── 文件 Tab ─────────────────────────────────────────────────────────────
+  const tabMeta = {
+    image:  { label:'上传图像文件', exts:['.dcm','.nii.gz'],             accept:'.dcm,.nii.gz',         limit:'≤ 500 MB' },
+    model:  { label:'上传模型文件', exts:['.stl'],                        accept:'.stl',                 limit:'≤ 200 MB' },
+    annot:  { label:'上传标注文件', exts:['.zip','.nii.gz'],              accept:'.zip,.nii.gz',         limit:'≤ 500 MB' },
+    report: { label:'上传报告文件', exts:['.pdf','.docx','.xlsx','.md'], accept:'.pdf,.docx,.xlsx,.md', limit:'≤ 50 MB'  },
+  };
+  let activeTab = 'image';
+
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+    activeTab = id;
+    document.getElementById('upload-btn').innerHTML =
+      `<i class="bi bi-plus"></i> ${tabMeta[id].label}`;
+    // 仅在模型 Tab 显示「模型文件展示」按钮
+    document.getElementById('model-gallery-btn').style.display =
+      (id === 'model') ? '' : 'none';
+  }
+
+  // ── 上传 Modal ────────────────────────────────────────────────────────────
+
+  function showUploadModal() {
+    const m = tabMeta[activeTab];
+    document.getElementById('upload-modal-title').textContent = m.label;
+    const meta = document.getElementById('upload-modal-meta');
+    meta.innerHTML = m.exts.map(e => `<span class="upload-meta-chip">${e}</span>`).join('')
+      + `<span class="upload-meta-chip limit">单文件 ${m.limit}</span>`;
+    document.getElementById('modal-file-list').innerHTML = '';
+    document.getElementById('modal-file-input').accept = m.accept;
+    document.getElementById('modal-zone').innerHTML = `
+      <span class="icon"><i class="bi bi-cloud-arrow-up"></i></span>
+      <div style="font-size:13px">点击或拖入文件</div>
+      <div class="hint">支持多文件同时上传</div>`;
+    const btn = document.getElementById('modal-upload-btn');
+    btn.disabled = false;
+    btn.textContent = '开始上传';
+    document.getElementById('modal-upload').classList.add('open');
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function confirmDeleteFile(fileId, fileName) {
+    document.getElementById('del-file-name').textContent = fileName;
+    document.getElementById('del-file-form').action = `/records/${recordNo}/files/${fileId}/delete`;
+    document.getElementById('modal-delete-file').classList.add('open');
+  }
+
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  function handleModalFiles(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    const list = document.getElementById('modal-file-list');
+    list.innerHTML = files.map((f, i) => `
+      <div class="upload-file-item" id="mf-${i}">
+        <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+        <span class="file-name" title="${f.name}">${f.name}</span>
+        <span class="file-size">${fmtSize(f.size)}</span>
+        <span class="file-status" id="ms-${i}">待上传</span>
+        <div style="width:100%">
+          <div class="upload-bar-track"><div class="upload-bar-fill" id="mb-${i}" style="width:0"></div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  function doModalUpload() {
+    const input = document.getElementById('modal-file-input');
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    const btn = document.getElementById('modal-upload-btn');
+    btn.disabled = true;
+    btn.textContent = '上传中…';
+
+    const formData = new FormData();
+    formData.append('file_type', activeTab === 'annot' ? 'annotation' : activeTab);
+    files.forEach(f => formData.append('files', f));
+
+    files.forEach((f, i) => {
+      let pct = 0;
+      const dur = Math.min(1800, 300 + f.size / 1e5);
+      const iv = setInterval(() => {
+        pct = Math.min(95, pct + Math.random() * 18 + 4);
+        document.getElementById(`mb-${i}`).style.width = pct + '%';
+        document.getElementById(`ms-${i}`).textContent = Math.floor(pct) + '%';
+        if (pct >= 95) clearInterval(iv);
+      }, dur / 28);
+    });
+
+    fetch(`/records/${recordNo}/files`, {
+      method: 'POST',
+      body: formData,
+    }).then(res => {
+      files.forEach((_, i) => {
+        document.getElementById(`mb-${i}`).style.width = '100%';
+        const s = document.getElementById(`ms-${i}`);
+        if (res.ok) {
+          s.innerHTML = '<i class="bi bi-check-circle-fill" style="color:#16a34a"></i> 完成';
+          document.getElementById(`mf-${i}`).classList.add('done');
+        } else {
+          s.innerHTML = '<i class="bi bi-x-circle-fill" style="color:#ef4444"></i> 失败';
+        }
+      });
+      btn.textContent = res.ok ? '上传完成' : '部分失败';
+      if (res.ok) setTimeout(() => { closeModal('modal-upload'); location.reload(); }, 900);
+    }).catch(() => {
+      btn.textContent = '上传失败';
+      files.forEach((_, i) => {
+        document.getElementById(`ms-${i}`).innerHTML = '<i class="bi bi-x-circle-fill" style="color:#ef4444"></i> 失败';
+      });
+    });
+  }
+
+  const modalZone = document.getElementById('modal-zone');
+  modalZone.addEventListener('dragover',  e => { e.preventDefault(); modalZone.classList.add('drag-over'); });
+  modalZone.addEventListener('dragleave', ()  => modalZone.classList.remove('drag-over'));
+  modalZone.addEventListener('drop', e => {
+    e.preventDefault();
+    modalZone.classList.remove('drag-over');
+    const inp = document.getElementById('modal-file-input');
+    inp.files = e.dataTransfer.files;
+    handleModalFiles(inp);
+  });
+</script>
+{% endblock %}

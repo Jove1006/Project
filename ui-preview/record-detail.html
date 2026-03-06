@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>记录详情 — 医学数据管理系统</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar-mount" data-page="index"></aside>
+
+  <div class="main">
+    <header class="topbar">
+      <a href="index.html" class="btn btn-ghost btn-icon btn-sm" style="margin-right:4px">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <span class="topbar-breadcrumb">
+        <a href="index.html" style="color:#9ca3af">记录列表</a>
+        &nbsp;/&nbsp;<span>MR-2026-000012</span>
+      </span>
+      <div style="flex:1"></div>
+      <a href="record-edit.html" class="btn btn-edit btn-sm">
+        <i class="bi bi-pencil"></i> 编辑
+      </a>
+      <button class="btn btn-delete btn-sm" onclick="document.getElementById('modal-delete').classList.add('open')">
+        <i class="bi bi-trash"></i> 删除记录
+      </button>
+    </header>
+
+    <div class="content">
+
+      <!-- Flash -->
+      <div class="flash success" id="flash" style="display:none">
+        <i class="bi bi-check-circle-fill"></i>
+        <span id="flash-text">操作成功</span>
+      </div>
+
+      <!-- 基本信息 -->
+      <div class="card" style="padding:22px; margin-bottom:16px">
+        <div class="section-title">基本信息</div>
+        <div class="detail-grid">
+          <div class="detail-cell">
+            <div class="label">记录编号</div>
+            <div class="value"><span class="record-code" style="font-size:13.5px">MR-2026-000012</span></div>
+          </div>
+          <div class="detail-cell">
+            <div class="label">检查日期</div>
+            <div class="value">2026年02月25日</div>
+          </div>
+          <div class="detail-cell">
+            <div class="label">所属医院</div>
+            <div class="value">广州中山医院</div>
+          </div>
+          <div class="detail-cell">
+            <div class="label">检查部位</div>
+            <div class="value"><span class="part-badge part-knee">膝关节</span></div>
+          </div>
+          <div class="detail-cell" style="grid-column:1/-1">
+            <div class="label">病例描述</div>
+            <div class="value" style="color:#6b7280; font-weight:400; line-height:1.6">
+              半月板损伤术前影像，包含MRI序列，患者左膝关节，建议关节镜手术评估。
+            </div>
+          </div>
+          <div class="detail-cell">
+            <div class="label">创建时间</div>
+            <div class="value" style="font-size:12.5px; color:#9ca3af; font-weight:400">2026-02-25 14:32:18</div>
+          </div>
+          <div class="detail-cell">
+            <div class="label">最后更新</div>
+            <div class="value" style="font-size:12.5px; color:#9ca3af; font-weight:400">2026-02-26 09:15:42</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关联文件 -->
+      <div class="card" style="overflow:hidden">
+        <!-- 标签栏 -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0 18px; border-bottom:1px solid #e8eaed">
+          <div class="tabs" style="border-bottom:none; padding:0">
+            <div class="tab active" onclick="switchTab('image', this)">
+              <span class="badge badge-image" style="margin-right:5px">图像</span> 3
+            </div>
+            <div class="tab" onclick="switchTab('model', this)">
+              <span class="badge badge-model" style="margin-right:5px">模型</span> 1
+            </div>
+            <div class="tab" onclick="switchTab('annot', this)">
+              <span class="badge badge-annot" style="margin-right:5px">标注</span> 0
+            </div>
+            <div class="tab" onclick="switchTab('report', this)">
+              <span class="badge badge-report" style="margin-right:5px">报告</span> 0
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="upload-btn" onclick="showUploadModal()">
+            <i class="bi bi-plus"></i> 上传文件
+          </button>
+        </div>
+
+        <!-- 图像 Tab -->
+        <div class="tab-content active" id="tab-image">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>文件名</th>
+                <th>格式</th>
+                <th>大小</th>
+                <th>上传时间</th>
+                <th width="90">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <i class="bi bi-file-earmark-image" style="color:#2563eb; margin-right:6px"></i>
+                  knee_mri_axial.dcm
+                </td>
+                <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">dcm</span></td>
+                <td style="color:#6b7280">24.3 MB</td>
+                <td style="color:#9ca3af; font-size:12px">2026-02-25 14:33</td>
+                <td>
+                  <div class="btn-group">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></button>
+                    <button class="btn btn-delete btn-icon btn-sm" title="删除文件"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <i class="bi bi-file-earmark-image" style="color:#2563eb; margin-right:6px"></i>
+                  knee_mri_sagittal.dcm
+                </td>
+                <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">dcm</span></td>
+                <td style="color:#6b7280">31.7 MB</td>
+                <td style="color:#9ca3af; font-size:12px">2026-02-25 14:33</td>
+                <td>
+                  <div class="btn-group">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></button>
+                    <button class="btn btn-delete btn-icon btn-sm" title="删除文件"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <i class="bi bi-file-earmark-image" style="color:#2563eb; margin-right:6px"></i>
+                  knee_ct_3d.nii.gz
+                </td>
+                <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">nii.gz</span></td>
+                <td style="color:#6b7280">156.2 MB</td>
+                <td style="color:#9ca3af; font-size:12px">2026-02-25 14:34</td>
+                <td>
+                  <div class="btn-group">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></button>
+                    <button class="btn btn-delete btn-icon btn-sm" title="删除文件"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 模型 tab -->
+        <div class="tab-content" id="tab-model">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>文件名</th><th>格式</th><th>大小</th><th>上传时间</th><th width="90">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <i class="bi bi-box" style="color:#16a34a; margin-right:6px"></i>
+                  knee_bone_model.stl
+                </td>
+                <td><span style="font-size:11px; color:#6b7280; background:#f3f4f6; padding:1px 7px; border-radius:4px">stl</span></td>
+                <td style="color:#6b7280">8.9 MB</td>
+                <td style="color:#9ca3af; font-size:12px">2026-02-25 14:35</td>
+                <td>
+                  <div class="btn-group">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="下载"><i class="bi bi-download"></i></button>
+                    <button class="btn btn-delete btn-icon btn-sm" title="删除文件"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 标注 Tab -->
+        <div class="tab-content" id="tab-annot">
+          <div class="empty-state">
+            <div class="icon"><i class="bi bi-tags"></i></div>
+            <p>暂无标注文件</p>
+          </div>
+        </div>
+
+        <!-- 报告 Tab -->
+        <div class="tab-content" id="tab-report">
+          <div class="empty-state">
+            <div class="icon"><i class="bi bi-file-text"></i></div>
+            <p>暂无报告文件</p>
+          </div>
+        </div>
+
+      </div><!-- /card -->
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- 删除确认 Modal -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">确认删除记录</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-delete')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0; font-size:13.5px; color:#374151">
+        确定要删除记录 <span class="record-code">MR-2026-000012</span> 及其所有关联文件吗？
+      </p>
+      <p style="margin:10px 0 0; font-size:12px; color:#ef4444">
+        <i class="bi bi-exclamation-triangle"></i> 此操作将同时删除 MinIO 存储中的 4 个文件，不可恢复。
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-delete')">取消</button>
+      <button class="btn btn-danger" onclick="location.href='index.html'">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 上传文件 Modal -->
+<div class="modal-overlay" id="modal-upload">
+  <div class="modal-box" style="width:500px">
+    <div class="modal-header">
+      <span class="modal-title" id="upload-modal-title">上传图像文件</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-upload')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <!-- 格式说明 -->
+      <div class="upload-meta" style="margin-bottom:12px" id="upload-modal-meta"></div>
+
+      <div class="upload-zone" id="modal-zone" onclick="document.getElementById('modal-file-input').click()">
+        <span class="icon"><i class="bi bi-cloud-arrow-up"></i></span>
+        <div style="font-size:13px">点击或拖入文件</div>
+        <div class="hint">支持多文件同时上传</div>
+      </div>
+      <input type="file" id="modal-file-input" multiple style="display:none"
+        onchange="handleModalFiles(this)">
+
+      <div class="upload-progress-wrap" id="modal-file-list" style="margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-upload')">取消</button>
+      <button class="btn btn-primary" id="modal-upload-btn" onclick="doModalUpload()">开始上传</button>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+  const tabMeta = {
+    image: { label:'上传图像文件', exts:['.dcm','.nii.gz'], limit:'≤ 500 MB' },
+    model: { label:'上传模型文件', exts:['.stl'],          limit:'≤ 200 MB' },
+    annot: { label:'上传标注文件', exts:['.zip','.nii.gz'], limit:'≤ 500 MB' },
+    report:{ label:'上传报告文件', exts:['.pdf','.docx','.xlsx','.md'], limit:'≤ 50 MB' },
+  };
+  let activeTab = 'image';
+
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+    activeTab = id;
+    document.getElementById('upload-btn').innerHTML =
+      `<i class="bi bi-plus"></i> ${tabMeta[id].label}`;
+  }
+
+  function showUploadModal() {
+    const m = tabMeta[activeTab];
+    document.getElementById('upload-modal-title').textContent = m.label;
+    const meta = document.getElementById('upload-modal-meta');
+    meta.innerHTML = m.exts.map(e => `<span class="upload-meta-chip">${e}</span>`).join('')
+      + `<span class="upload-meta-chip limit">单文件 ${m.limit}</span>`;
+    document.getElementById('modal-file-list').innerHTML = '';
+    document.getElementById('modal-zone').innerHTML = `
+      <span class="icon"><i class="bi bi-cloud-arrow-up"></i></span>
+      <div style="font-size:13px">点击或拖入文件</div>
+      <div class="hint">支持多文件同时上传</div>`;
+    document.getElementById('modal-upload-btn').disabled = false;
+    document.getElementById('modal-upload-btn').textContent = '开始上传';
+    document.getElementById('modal-upload').classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function handleModalFiles(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    const list = document.getElementById('modal-file-list');
+    list.innerHTML = files.map((f,i) => `
+      <div class="upload-file-item" id="mf-${i}">
+        <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+        <span class="file-name" title="${f.name}">${f.name}</span>
+        <span class="file-size">${fmtSize(f.size)}</span>
+        <span class="file-status" id="ms-${i}">待上传</span>
+        <div style="width:100%">
+          <div class="upload-bar-track"><div class="upload-bar-fill" id="mb-${i}" style="width:0"></div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/1024/1024).toFixed(1) + ' MB';
+  }
+
+  function doModalUpload() {
+    const files = document.getElementById('modal-file-input').files;
+    if (!files.length) { return; }
+    document.getElementById('modal-upload-btn').disabled = true;
+    document.getElementById('modal-upload-btn').textContent = '上传中…';
+    Array.from(files).forEach((f, i) => {
+      let pct = 0;
+      const duration = Math.min(1800, 300 + f.size / 1e5);
+      const iv = setInterval(() => {
+        pct = Math.min(100, pct + Math.random() * 18 + 4);
+        document.getElementById(`mb-${i}`).style.width = pct + '%';
+        document.getElementById(`ms-${i}`).textContent = Math.floor(pct) + '%';
+        if (pct >= 100) {
+          clearInterval(iv);
+          const item = document.getElementById(`mf-${i}`);
+          item.classList.add('done');
+          document.getElementById(`ms-${i}`).innerHTML = '<i class="bi bi-check-circle-fill"></i> 完成';
+          // Check if all done
+          const allDone = Array.from(document.querySelectorAll('[id^="mb-"]'))
+            .every(b => b.style.width === '100%');
+          if (allDone) {
+            document.getElementById('modal-upload-btn').textContent = '全部完成';
+            setTimeout(() => closeModal('modal-upload'), 800);
+          }
+        }
+      }, duration / 28);
+    });
+  }
+</script>
+</body>
+</html>

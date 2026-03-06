@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta charset="UTF-8" />
+    <title>三维云平台</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="stylesheet" href="/static/webgln/css/index.css">
+    <link rel="stylesheet" href="/static/css/colpick.css">
+    <link rel="icon" href="/portal/images/leaf.png">
+    <link href="/static/webgln/css/mfb.css" rel="stylesheet">
+    <link href="/static/webgln/css/jquery.range.css" rel="stylesheet">
+    <script src="/static/webgln/js/modernizr.touch.js"></script>
+    <script src="/static/webgln/js/dev/three.min.js"></script>
+    <script src="/static/webgln/js/dev/DRACOLoader.js"></script>
+    <script src="/static/webgln/js/dev/draco_decoder.js"></script>
+    <script src="/static/webgln/js/dev/CustomTrackballControls.js"></script>
+    <script src="/static/webgln/js/dev/DragControls.js"></script>
+    <script src="/static/webgln/js/main-test.js"></script>
+    <script src="/static/webgln/js/Detector.js"></script>
+    <script src="/static/webgln/js/jquery-3.4.1.min.js"></script>
+    <script src="/static/webgln/js/jquery.range.js"></script>
+    <script type="text/javascript" src="/static/js/colpick-one.js"></script>
+
+    <script type="text/javascript">
+        if (!Detector.webgl) {
+            alert('您的浏览器或系统不支持WebGL引擎3D展示，请更换谷歌浏览器和Win7以上操作系统。');
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* 溢出隐藏 */
+            background: radial-gradient(at center center, #fff 20%, #666f7a 100%);
+            /*background: radial-gradient(at center center,rgb(245, 245, 245) 0%,rgb(0, 0, 0) 100%);*/
+        }
+
+        .catecenter {
+            width: 48px;
+            height: 48px;
+            font-size: 8px;
+            color: #fff;
+            word-break: break-all;
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 12px;
+
+
+            display: -webkit-box;
+            -webkit-box-orient: horizontal;
+            -webkit-box-pack: center;
+            -webkit-box-align: center;
+
+            display: -moz-box;
+            -moz-box-orient: horizontal;
+            -moz-box-pack: center;
+            -moz-box-align: center;
+
+            display: -o-box;
+            -o-box-orient: horizontal;
+            -o-box-pack: center;
+            -o-box-align: center;
+
+            display: -ms-box;
+            -ms-box-orient: horizontal;
+            -ms-box-pack: center;
+            -ms-box-align: center;
+
+            display: box;
+            box-orient: horizontal;
+            box-pack: center;
+            box-align: center;
+        }
+
+        .cateselect {
+            background: #0a6ebd;
+        }
+
+        .div_tool {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            background-color: rgba(39, 53, 95, 0.65);
+            box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.25);
+            border-radius: 0.1rem .1rem 0 0;
+            font-size: .25rem;
+            padding: .8rem 0;
+        }
+
+        .div_tool ul {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .div_tool ul li {
+            overflow: hidden;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-radius: .08rem;
+            cursor: pointer;
+            float: left;
+            background-color: rgba(142, 142, 142, 0.1);
+            box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        .tools-container {
+            position: absolute;
+            top: 0;
+            right: 50%;
+            transform: translateX(50%);
+            -moz-transform: translateX(50%);
+            -webkit-transform: translateX(50%);
+            -o-transform: translateX(50%);
+            width: 30.9rem;
+            height: auto;
+            background-color: rgba(20, 33, 53, 0.65);
+            border-radius: .08rem;
+            padding: .05rem;
+            display: none;
+        }
+
+        .tools-container .content {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .tools-container .content .tool {
+            width: 2rem;
+            height: 2rem;
+            padding: .5rem;
+            background-color: rgba(20, 33, 53, 0.65);
+            box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.25);
+            border: 1px rgba(255, 255, 255, 0) dashed;
+            border-radius: .1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px solid grey;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            font-size: 12px;
+            background-color: rgba(39, 53, 95, 0.65);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 2px;
+
+            /* 定位工具提示 */
+            position: absolute;
+            z-index: 1;
+            top: 100%;
+            left: 50%;
+            margin-left: -60px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+    </style>
+    <script>
+        //百度统计
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?fd1b5c70da35e6898426639f9b9edccc";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="loading" id="reportLoading">
+        <div class="loading-animation"></div>
+        <div class="loading-text">生成报告中...</div>
+    </div>
+    <div class="loading" id="loading">
+        <div class="loader">
+            <div class="box">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="box">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="box">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="box">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+        <div class="percent" id="percent"></div>
+        <!--<a class="footer" href="http://www.beian.miit.gov.cn">蜀ICP备2023013476号-1</a>-->
+    </div>
+    <div class="div_stlfiles" id='div_stlfiles'>
+        <ul class="stlfiles" id="stlfiles" onwheel="scrollHorizontally(event)"></ul>
+    </div>
+    <div class="userinfo"
+        style="position:fixed;top:0;left:0;color:#fff;line-height: 20px; padding: 10px 10px 10px 10px;display: flex;">
+        <span>加载中</span>
+    </div>
+    <div class="div_tool" id="div_tool">
+        <ul>
+            <li class="active" onclick="openAllPart()">
+                <svg t="1659978798560" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="11764" width="128" height="128">
+                    <path
+                        d="M469.333333 170.666667v682.666666a42.666667 42.666667 0 0 1-42.666666 42.666667H170.666667a42.666667 42.666667 0 0 1-42.666667-42.666667V170.666667a42.666667 42.666667 0 0 1 42.666667-42.666667h256a42.666667 42.666667 0 0 1 42.666666 42.666667z m128 213.333333h256a42.666667 42.666667 0 0 0 42.666667-42.666667V170.666667a42.666667 42.666667 0 0 0-42.666667-42.666667h-256a42.666667 42.666667 0 0 0-42.666666 42.666667v170.666666a42.666667 42.666667 0 0 0 42.666666 42.666667z m0 512h256a42.666667 42.666667 0 0 0 42.666667-42.666667v-341.333333a42.666667 42.666667 0 0 0-42.666667-42.666667h-256a42.666667 42.666667 0 0 0-42.666666 42.666667v341.333333a42.666667 42.666667 0 0 0 42.666666 42.666667z"
+                        p-id="11765" fill="#ffffff"></path>
+                </svg>
+            </li>
+            <li onclick="openAllTool()">
+                <svg t="1659978521053" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="11899" width="128" height="128">
+                    <path
+                        d="M140.373333 793.173333a42.666667 42.666667 0 0 0-12.373333 29.866667v7.68a42.666667 42.666667 0 0 0 12.373333 29.866667l23.04 23.04a42.666667 42.666667 0 0 0 29.866667 12.373333h7.68a42.666667 42.666667 0 0 0 29.866667-12.373333L474.453333 640 384 549.546667zM725.333333 469.333333a170.666667 170.666667 0 0 0 170.666667-170.666666v-13.653334a21.76 21.76 0 0 0-6.4-15.36l-7.253333-7.253333a21.333333 21.333333 0 0 0-30.293334 0l-66.56 66.56a21.76 21.76 0 0 1-29.866666 0l-60.586667-60.586667a21.333333 21.333333 0 0 1 0-29.866666L761.6 170.666667a21.333333 21.333333 0 0 0 0-30.293334l-7.253333-7.253333a21.76 21.76 0 0 0-15.36-5.12H725.333333a170.666667 170.666667 0 0 0-170.666666 170.666667 165.973333 165.973333 0 0 0 13.653333 66.56l-71.253333 71.253333-146.346667-145.92-37.546667-69.973333a85.333333 85.333333 0 0 0-28.16-30.72L196.693333 131.413333a21.333333 21.333333 0 0 0-26.026666 2.986667L134.4 170.666667a21.333333 21.333333 0 0 0-2.986667 26.88l58.453334 87.466666a85.333333 85.333333 0 0 0 30.72 28.16l69.973333 37.546667L579.84 640l-21.333333 21.333333a21.76 21.76 0 0 0 0 30.293334l192 192a42.666667 42.666667 0 0 0 29.866666 12.373333h50.346667a42.666667 42.666667 0 0 0 29.866667-12.373333l23.04-23.04a42.666667 42.666667 0 0 0 12.373333-29.866667v-50.346667a42.666667 42.666667 0 0 0-12.373333-29.866666l-192-192a21.76 21.76 0 0 0-30.293334 0l-21.333333 21.333333-52.48-52.906667 71.253333-71.253333A165.973333 165.973333 0 0 0 725.333333 469.333333z"
+                        p-id="11900" fill="#ffffff"></path>
+                </svg>
+            </li>
+            <li onclick="reinitCamera()">
+                <svg t="1659978593171" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12038" width="128" height="128">
+                    <path
+                        d="M938.666667 512a384 384 0 0 1-384 384 379.306667 379.306667 0 0 1-220.16-69.546667 21.76 21.76 0 0 1-8.96-15.786666 21.333333 21.333333 0 0 1 5.973333-16.64l30.72-31.146667a21.333333 21.333333 0 0 1 26.88-2.56A294.826667 294.826667 0 0 0 554.666667 810.666667a298.666667 298.666667 0 1 0-298.666667-298.666667h100.693333a20.906667 20.906667 0 0 1 15.36 6.4l8.533334 8.533333a21.333333 21.333333 0 0 1 0 30.293334L229.973333 708.266667a21.76 21.76 0 0 1-30.293333 0l-150.613333-151.04a21.333333 21.333333 0 0 1 0-30.293334l8.533333-8.533333a20.906667 20.906667 0 0 1 15.36-6.4H170.666667a384 384 0 0 1 768 0z m-298.666667 0a85.333333 85.333333 0 1 0-85.333333 85.333333 85.333333 85.333333 0 0 0 85.333333-85.333333z"
+                        p-id="12039" fill="#ffffff"></path>
+                </svg>
+            </li>
+            <li onclick="changebgcolor()">
+                <svg t="1659978658107" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12177" width="128" height="128">
+                    <path
+                        d="M85.333333 320v-128a21.333333 21.333333 0 0 1 21.333334-21.333333h341.333333a21.333333 21.333333 0 0 1 21.333333 21.333333v128a21.333333 21.333333 0 0 1-21.333333 21.333333h-341.333333a21.333333 21.333333 0 0 1-21.333334-21.333333zM917.333333 170.666667h-341.333333a21.333333 21.333333 0 0 0-21.333333 21.333333v128a21.333333 21.333333 0 0 0 21.333333 21.333333h341.333333a21.333333 21.333333 0 0 0 21.333334-21.333333v-128a21.333333 21.333333 0 0 0-21.333334-21.333333z m-810.666666 426.666666h85.333333a21.333333 21.333333 0 0 0 21.333333-21.333333v-128a21.333333 21.333333 0 0 0-21.333333-21.333333h-85.333333a21.333333 21.333333 0 0 0-21.333334 21.333333v128a21.333333 21.333333 0 0 0 21.333334 21.333333zM298.666667 448v128a21.333333 21.333333 0 0 0 21.333333 21.333333h384a21.333333 21.333333 0 0 0 21.333333-21.333333v-128a21.333333 21.333333 0 0 0-21.333333-21.333333h-384a21.333333 21.333333 0 0 0-21.333333 21.333333z m618.666666-21.333333h-85.333333a21.333333 21.333333 0 0 0-21.333333 21.333333v128a21.333333 21.333333 0 0 0 21.333333 21.333333h85.333333a21.333333 21.333333 0 0 0 21.333334-21.333333v-128a21.333333 21.333333 0 0 0-21.333334-21.333333z m-469.333333 256h-341.333333a21.333333 21.333333 0 0 0-21.333334 21.333333v128a21.333333 21.333333 0 0 0 21.333334 21.333333h341.333333a21.333333 21.333333 0 0 0 21.333333-21.333333v-128a21.333333 21.333333 0 0 0-21.333333-21.333333z m469.333333 0h-341.333333a21.333333 21.333333 0 0 0-21.333333 21.333333v128a21.333333 21.333333 0 0 0 21.333333 21.333333h341.333333a21.333333 21.333333 0 0 0 21.333334-21.333333v-128a21.333333 21.333333 0 0 0-21.333334-21.333333z"
+                        p-id="12178" fill="#ffffff"></path>
+                </svg>
+            </li>
+        </ul>
+    </div>
+    <div class="tools-container">
+        <div class="content">
+            <div class="tool" id="idRotatePlay" onclick="rotatePlay()">
+                <svg t="1660559415125" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12361" width="128" height="128">
+                    <path
+                        d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333zM433.066667 329.386667A32 32 0 0 0 384 356.266667v311.466666a32 32 0 0 0 49.066667 26.88L682.666667 539.306667a32.426667 32.426667 0 0 0 0-54.613334z"
+                        p-id="12362" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idSelectPart" onclick="changeSelectPart()">
+                <svg t="1659978961773" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12320" width="128" height="128">
+                    <path
+                        d="M384 490.666667v42.666666a21.333333 21.333333 0 0 1-21.333333 21.333334H256v85.333333a21.333333 21.333333 0 0 1-36.266667 14.933333l-128-128a21.76 21.76 0 0 1 0-30.293333l128-128A21.333333 21.333333 0 0 1 256 384v85.333333h106.666667a21.333333 21.333333 0 0 1 21.333333 21.333334zM384 256h85.333333v106.666667a21.333333 21.333333 0 0 0 21.333334 21.333333h42.666666a21.333333 21.333333 0 0 0 21.333334-21.333333V256h85.333333a21.333333 21.333333 0 0 0 15.36-36.266667l-128-128a21.76 21.76 0 0 0-30.293333 0l-128 128A21.333333 21.333333 0 0 0 384 256z m256 512h-85.333333v-106.666667a21.333333 21.333333 0 0 0-21.333334-21.333333h-42.666666a21.333333 21.333333 0 0 0-21.333334 21.333333V768H384a21.333333 21.333333 0 0 0-14.933333 36.266667l128 128a21.76 21.76 0 0 0 30.293333 0l128-128A21.333333 21.333333 0 0 0 640 768z m292.693333-270.933333l-128-128A21.333333 21.333333 0 0 0 768 384v85.333333h-106.666667a21.333333 21.333333 0 0 0-21.333333 21.333334v42.666666a21.333333 21.333333 0 0 0 21.333333 21.333334H768v85.333333a21.333333 21.333333 0 0 0 36.266667 14.933333l128-128a21.76 21.76 0 0 0 0.426666-29.866666z"
+                        p-id="12321" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnDragMode" onclick="changePart()">
+                <svg t="1659979101621" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12494" width="128" height="128">
+                    <path
+                        d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333z m128-341.333333a128 128 0 1 1-128-128 128 128 0 0 1 128 128z"
+                        p-id="12495" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnPopup" onclick="popupFunctionWindow()">
+                <svg t="1690784030798" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="41252" width="128" height="128">
+                    <path
+                        d="M209.06496 276.48v499.2h605.86496V276.48H209.06496z m523.94496 417.28H290.98496v-261.12h442.02496v261.12z"
+                        p-id="41253" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnPopup" onclick="clippingPart()">
+                <svg t="1741365443424" class="icon" viewBox="0 0 1024 1024" version="1.1" 
+                xmlns="http://www.w3.org/2000/svg" p-id="5520" width="128" height="128">
+                    <path 
+                        d="M496.924444 196.551111l297.415112 117.304889-0.682667 2.048 2.787555-1.706667v398.222223l-284.444444 170.666666v-398.222222l223.004444-133.802667-234.496-92.558222-193.706666 107.235556-24.462222-50.460445 214.584888-118.727111z m242.688 218.055111l-170.666666 102.4v265.557334l170.666666-102.4V414.606222z" fill="#ffffff" opacity=".6" p-id="5521"></path><path d="M170.666667 257.308444l398.222222 170.666667v512l-398.222222-170.666667v-512z m341.333333 478.833778l-82.318222 82.318222 56.32 24.120889 25.998222-25.998222V736.142222z m0-160.881778l-194.958222 194.901334 56.32 24.120889L512 655.701333v-80.440889z m-35.84-125.155555L227.555556 698.823111v32.995556l33.166222 14.222222L512 494.819556 512 465.464889l-35.84-15.36z m-112.64-48.241778L227.555556 537.827556v80.497777l192.284444-192.341333-56.32-24.120889z m-112.64-48.298667L227.555556 376.945778V457.386667l79.644444-79.644445-56.32-24.177778z" 
+                        fill="#eee" p-id="5522"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnRotateLock" onclick="rotateLock()">
+                <svg t="1660541553066" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12379" width="128" height="128">
+                    <path
+                        d="M917.333333 469.333333h-66.986666A341.333333 341.333333 0 0 0 554.666667 173.653333V106.666667a21.333333 21.333333 0 0 0-21.333334-21.333334h-42.666666a21.333333 21.333333 0 0 0-21.333334 21.333334v66.986666A341.333333 341.333333 0 0 0 173.653333 469.333333H106.666667a21.333333 21.333333 0 0 0-21.333334 21.333334v42.666666a21.333333 21.333333 0 0 0 21.333334 21.333334h66.986666A341.333333 341.333333 0 0 0 469.333333 850.346667v66.986666a21.333333 21.333333 0 0 0 21.333334 21.333334h42.666666a21.333333 21.333333 0 0 0 21.333334-21.333334v-66.986666A341.333333 341.333333 0 0 0 850.346667 554.666667h66.986666a21.333333 21.333333 0 0 0 21.333334-21.333334v-42.666666a21.333333 21.333333 0 0 0-21.333334-21.333334zM512 768a256 256 0 1 1 256-256 256 256 0 0 1-256 256z m0-341.333333a85.333333 85.333333 0 1 0 85.333333 85.333333 85.333333 85.333333 0 0 0-85.333333-85.333333z"
+                        p-id="12380" fill="#ffffff"></path>
+                </svg>
+                <p style="color: #ffffff;font-size: small;" id="rotateLockAngle">0</p>
+            </div>
+            <div class="tool" id="idBtnDistance" onclick="distancePoints()">
+                <svg t="1660010231000" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12644" width="128" height="128">
+                    <path
+                        d="M926.293333 247.893333l-150.186666-150.186666a42.666667 42.666667 0 0 0-29.866667-12.373334h-31.146667a42.666667 42.666667 0 0 0-30.293333 12.373334L97.706667 684.8a42.666667 42.666667 0 0 0-12.373334 30.293333v31.146667a42.666667 42.666667 0 0 0 12.373334 29.866667l150.186666 150.186666a42.666667 42.666667 0 0 0 29.866667 12.373334h31.146667a42.666667 42.666667 0 0 0 32.426666-12.373334L926.293333 341.333333a42.666667 42.666667 0 0 0 12.373334-32.426666v-31.146667a42.666667 42.666667 0 0 0-12.373334-29.866667zM293.546667 853.333333l-120.746667-122.88 42.666667-40.533333 45.226666 45.226667a21.333333 21.333333 0 0 0 29.866667 0l23.04-23.04a21.333333 21.333333 0 0 0 0-29.866667l-46.933333-45.226667 52.906666-52.906666 23.893334 23.893333a21.333333 21.333333 0 0 0 29.866666 0l23.04-23.04a21.333333 21.333333 0 0 0 0-29.866667l-23.893333-23.893333L426.666667 478.293333l42.666666 45.226667a21.333333 21.333333 0 0 0 29.866667 0l23.04-23.04a21.333333 21.333333 0 0 0 0-29.866667L478.293333 426.666667l52.906667-52.906667 23.893333 23.893333a21.333333 21.333333 0 0 0 29.866667 0l23.04-23.04a21.333333 21.333333 0 0 0 0-29.866666l-23.893333-23.893334 52.906666-52.906666L682.666667 311.893333a21.333333 21.333333 0 0 0 29.866666 0l23.04-23.04a21.333333 21.333333 0 0 0 0-29.866666L689.92 213.333333l40.533333-42.666666L853.333333 293.546667z"
+                        p-id="12645" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnAngle" onclick="anglePoints()">
+                <svg t="1660011172577" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="12822" width="128" height="128">
+                    <path
+                        d="M469.333333 192.853333v-42.666666a21.333333 21.333333 0 0 1 6.826667-15.36 23.466667 23.466667 0 0 1 15.786667-6.826667A426.666667 426.666667 0 0 1 896 532.053333a23.466667 23.466667 0 0 1-5.973333 15.786667 21.333333 21.333333 0 0 1-15.36 6.826667h-42.666667a20.906667 20.906667 0 0 1-20.906667-20.053334A341.333333 341.333333 0 0 0 489.386667 213.333333a20.906667 20.906667 0 0 1-20.053334-20.48zM874.666667 640h-42.666667a21.333333 21.333333 0 0 0-21.333333 21.333333V810.666667H213.333333V213.333333h149.333334a21.333333 21.333333 0 0 0 21.333333-21.333333v-42.666667a21.333333 21.333333 0 0 0-21.333333-21.333333H213.333333a85.333333 85.333333 0 0 0-85.333333 85.333333v597.333334a85.333333 85.333333 0 0 0 85.333333 85.333333h597.333334a85.333333 85.333333 0 0 0 85.333333-85.333333v-149.333334a21.333333 21.333333 0 0 0-21.333333-21.333333z m-384-42.666667a64 64 0 1 0-64-64 64 64 0 0 0 64 64z"
+                        p-id="12823" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnLabel" onclick="labelPoint()">
+                <svg t="1660011296886" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="13008" width="128" height="128">
+                    <path
+                        d="M883.626667 145.493333l-5.12-5.12a44.8 44.8 0 0 0-30.293334-12.373333h-339.2a85.333333 85.333333 0 0 0-60.586666 25.173333l-308.053334 308.053334a42.666667 42.666667 0 0 0 0 60.16l362.24 362.24a42.666667 42.666667 0 0 0 60.16 0l308.053334-308.053334a85.333333 85.333333 0 0 0 25.173333-60.586666V175.786667a44.8 44.8 0 0 0-12.373333-30.293334zM682.666667 426.666667a85.333333 85.333333 0 1 1 85.333333-85.333334 85.333333 85.333333 0 0 1-85.333333 85.333334z"
+                        p-id="13009" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="tool" id="idBtnDelete" onclick="deleteItem()">
+                <svg t="1660011367761" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="13186" width="128" height="128">
+                    <path
+                        d="M853.333333 192v42.666667a21.333333 21.333333 0 0 1-21.333333 21.333333h-640a21.333333 21.333333 0 0 1-21.333333-21.333333v-42.666667a21.333333 21.333333 0 0 1 21.333333-21.333333H384V128a42.666667 42.666667 0 0 1 42.666667-42.666667h170.666666a42.666667 42.666667 0 0 1 42.666667 42.666667v42.666667h192a21.333333 21.333333 0 0 1 21.333333 21.333333zM250.453333 859.306667a85.333333 85.333333 0 0 0 85.333334 79.36h353.28a85.333333 85.333333 0 0 0 85.333333-79.36L810.666667 341.333333H213.333333z"
+                        p-id="13187" fill="#ffffff"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <div id="inset" style="position: fixed;right:0;top:120px;"></div>
+    <ul id="menua" class="mfb-component--tr mfb-zoomin" data-mfb-toggle="click" style="margin-top:5px;">
+        <li class="mfb-component__wrap">
+            <a href="#" class="mfb-component__button--main">
+                <svg t="1615425347061" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="2142" width="24" height="24">
+                    <path
+                        d="M204.8 944.873h609.745c51.2 0 93.091-41.891 93.091-88.437V158.255c0-51.2-41.89-88.437-93.09-88.437H204.8c-51.2 0-93.09 41.891-93.09 88.437v693.527c0 51.2 41.89 93.09 93.09 93.09z m-27.927-786.618c0-13.964 13.963-27.928 27.927-27.928h609.745c13.964 0 27.928 13.964 27.928 27.928v693.527c0 13.963-13.964 27.927-27.928 27.927H204.8c-13.964 0-27.927-13.964-27.927-27.927V158.255z"
+                        fill="#ffffff" p-id="2143"></path>
+                    <path
+                        d="M442.182 353.745h302.545c18.618 0 32.582-13.963 32.582-32.581s-13.964-32.582-32.582-32.582H442.182c-18.618 0-32.582 13.963-32.582 32.582s13.964 32.581 32.582 32.581z m0 167.564h302.545c18.618 0 32.582-13.964 32.582-32.582S763.345 460.8 744.727 460.8H442.182c-18.618 0-32.582 13.964-32.582 32.582s18.618 27.927 32.582 27.927z m0 181.527h302.545c18.618 0 32.582-13.963 32.582-32.581 0-18.619-13.964-32.582-32.582-32.582H442.182c-18.618 0-32.582 13.963-32.582 32.582 4.655 18.618 18.618 32.581 32.582 32.581zM297.89 353.746h27.927c18.618 0 32.582-13.964 32.582-32.582s-18.618-27.928-32.582-27.928h-27.927c-18.618 0-32.582 13.964-32.582 27.928s13.964 32.581 32.582 32.581z m0 167.563h27.927c18.618 0 32.582-13.964 32.582-32.582S344.436 460.8 325.818 460.8h-27.927c-18.618 0-32.582 13.964-32.582 32.582s13.964 27.927 32.582 27.927z m0 181.527h27.927c18.618 0 32.582-13.963 32.582-32.581 0-18.619-13.964-32.582-32.582-32.582h-27.927c-18.618 0-32.582 13.963-32.582 32.582 0 18.618 13.964 32.581 32.582 32.581z"
+                        fill="#ffffff" p-id="2144"></path>
+                </svg>
+            </a>
+            <ul class="mfb-component__list catelist">
+            </ul>
+        </li>
+    </ul>
+    <div class="popup">
+        <ul class="feature-list">
+            <li onclick="featureMeasureUterus()">
+                <img class="icon" src="/static/webgln/images/zigongjiliu.svg" alt="图标">
+                <div>
+                    <p class="name">病灶-器官表面测距<span id="feature-item-status1" class="badge bg-success"
+                            style="margin-left: .35em;">打开</span></p>
+                    <p class="description">测量并标记器官表面到病灶的最近距离</p>
+                </div>
+            </li>
+        </ul>
+        <button>关闭</button>
+    </div>
+    <iframe id="dicomIframe" src=""></iframe>
+    <script>
+        var scene, camera, pointLight, renderer, controls, controlsd;
+        var axes, gridHelper, group, stlfiles;
+        var raycaster, mouse, outlineMesh, objbox, clipx, clipy, clipz;
+        var idNavHtml = "";
+        var AllOpacity = 0;
+        var stlfileoid = 0;
+
+        var meshobjects = [];
+        var stloldfiles = [];
+        var totalprogress = [];
+        var meshloadindex = [];
+        var meshpos = [];
+        var meshloadID = [];
+        var enableSelection = false;
+        var enableDrag = false;
+        var enableRender = false;
+        var renderTimeout;
+        var clippingflag = false;
+        var clickFlag = false;
+        var start = {
+            x: 0,
+            y: 0
+        };
+        var end = {
+            x: 0,
+            y: 0
+        };
+
+
+        var objgroup = new THREE.Group();
+
+        ClearColor = 0xffffff;
+        ClearAlpha = 0;
+        SelectPart = false;
+        //测量
+        DistancePoint = false;
+        AnglePoint = false;
+        LabelPoint = false;
+        ModelClip = false;
+        MeasureType = "none";
+        clickedPoints = [];
+        drawPoints = new Map();
+        drawLines = new Map();
+        drawTexts = new Map();
+        measureObj = new Map();
+        labelInput = '';
+        needDeleteTag = new Map()
+        boundingBoxTotal = []
+        relatingModelArr = []
+        RotateLock = 0;
+        RotatePlay = false;
+
+        iRaycasterClick = 0;
+        openMeshLayer = 0;
+        var clipPlanes = [
+            new THREE.Plane(new THREE.Vector3(1, 0, 0), 0),
+            new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
+            new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)
+        ];
+
+        var cateselectid = [];
+        var modelOperationList = [];
+        var mainCateId = 1;
+        let userId;
+        let operationType = GetQueryString('operation');
+        let patientName = '';
+
+        $.post("/?s=App.Liver.GetModelList", {
+            order_no: GetQueryString("order_no")
+        }, function (data, status) {
+            stlfiles = data.data.modelList;
+            orderInfo = data.data.orderInfo;
+            if (orderInfo["status"] == 0) {
+                return;
+            }
+            userId = orderInfo['user_id'];
+            let items = [];
+            let datelist = {};
+            for (var p in stlfiles) {
+                let element = stlfiles[p];
+                if (!datelist[element.cateid]) {
+                    items.push({
+                        cateid: element.cateid,
+                        catename: element.catename
+                    })
+                    datelist[element.cateid] = element;
+                }
+            }
+            datelist = {};
+            var catehtml = '';
+            for (var m in items) {
+                let cateId = items[m].cateid;
+                cateselectid.push(cateId);
+                if (m == 0) {
+                    mainCateId = cateId;
+                }
+                catehtml += '<li>';
+                catehtml += '<span data-cate="' + cateId + '" class="mfb-component__button--child catecenter cateselect">';
+                catehtml += items[m].catename;
+                catehtml += '</span>';
+                catehtml += '</li>';
+            }
+            if(userId == 5){
+                
+            } else {
+                const uid = orderInfo?.attachment?.dicom_tags?.uid;
+                if(uid){
+                    catehtml += '<li>';
+                    catehtml += '<span data-cate="CT" class="mfb-component__button--child catecenter">';
+                    catehtml += '云胶片';
+                    catehtml += '</span>';
+                    catehtml += '</li>';
+                }
+            }
+            $('.catelist').html(catehtml);
+            
+            let headerText = orderInfo['patient_name'];
+            patientName = orderInfo['patient_name'];
+            if (userId == 5 || userId == 8) {//子账号sub103和sub106
+                ClearAlpha = 0.75;
+                headerText = "医院:" + orderInfo['hospital']
+                    + "<br/>科室:" + orderInfo['department']
+                    + "<br/>患者:" + orderInfo['patient_name'];
+            }
+            if (operationType == 'report') {
+                $('#loading').hide();
+                $('#reportLoading').show();
+            } else {
+                $('#reportLoading').hide();
+            }
+            if (orderInfo['note'].trim() == "") {
+                $('.userinfo').html('<span class="tooltip">' + headerText + '</span>');
+            } else {
+                $('.userinfo').html('<span class="tooltip">' + headerText + '<span class="tooltiptext">' + orderInfo['note'] + '</span></span>');
+            }
+            if (userId == 5 || userId == 8) {
+                $('.tooltip').css('color', 'grey');
+            }
+            $(".catecenter").click(function (e) {
+                let cateVal = $(this).attr('data-cate');
+                if ($(this).hasClass("cateselect")) {
+                    $(this).removeClass("cateselect");
+                    contains(cateselectid, parseInt(cateVal));
+                    $('.stlfiles').children().filter('[data-cate="' + cateVal + '"]').hide();
+                } else {
+                    if(cateVal == 'CT'){
+                        const uid = orderInfo?.attachment?.dicom_tags?.uid;
+                        $('#dicomIframe').attr('src', '//s.hzyzrz123456.com.cn/dicom-viewer/?StudyUID=' + uid);
+                        $('#dicomIframe').show();
+                    }else{
+                        $(this).addClass("cateselect");
+                        cateselectid.push(parseInt(cateVal));
+                        $('.stlfiles').children().filter('[data-cate="' + cateVal + '"]').show();
+                    }
+                }
+            });
+            window.addEventListener('message', function (event) {
+                if (event.data.type === 'dicom-viewer-back') {
+                    $('#dicomIframe').hide();
+                }
+            }, false);
+            $(".popup button").click(function (e) {
+                $(".popup").hide();
+            })
+            threeStart();
+        });
+
+        function threeStart() {
+            initThree();
+            initObject();
+            initControl();
+            initRaycaster();
+            animate();
+            $("#stlfiles").on("touchstart", function () {
+                controls.enabled = false;
+            });
+            $("#stlfiles").on("touchmove", function () {
+                controls.enabled = false;
+            });
+            $("#stlfiles").on("touchend", function () {
+                controls.enabled = true;
+            });
+            $(".tanchu").on("touchstart", function () {
+                controls.enabled = false;
+            });
+            $(".tanchu").on("touchmove", function () {
+                controls.enabled = false;
+                enableRender = true;
+            });
+            $(".tanchu").on("touchend", function () {
+                controls.enabled = true;
+                enableRender = false;
+            });
+            $(".tanchu").on("mousemove", function () {
+                enableRender = true;
+            });
+            $(".tanchu").on("mousedown", function () {
+                enableRender = false;
+            });
+            initstlfiles();
+            if (window.screen.width < 500) {
+                $('.div_stlfiles').offset({ left: 0, top: $('body').height() - $('.div_tool').height() - $('.div_stlfiles').height() - 30 });
+                $('.tools-container').css("transform", " translateX(50%) scaleX(0.88)");
+            } else {
+                $('.div_stlfiles').offset({ left: 0, top: $('body').height() - $('.div_tool').height() - $('.div_stlfiles').height() - 30 });
+            }
+            $('.tanchu').offset({ left: 0, top: $('.tools-container').height() });
+        }
+
+        function GetQueryString(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return decodeURIComponent(r[2]);
+            return null;
+        }
+
+        function scrollHorizontally(e) {
+            e.preventDefault();
+            e.currentTarget.scrollLeft += e.deltaY;
+        }
+
+        function thisshow() {
+            $('.stlfiles').children().show()
+            $('.color-display').colpick({
+                colorScheme: 'light',
+                layout: 'hex',
+                color: 'ff0000',
+                submitText: '确定',
+                onShow: function (v) {
+                    if (userId == 5) return false;
+                },
+                onChange: function (hsb, hex, rgb, el, bySetColor) {
+                    $(el).css('background-color', '#' + hex);
+                },
+                onSubmit: function (hsb, hex, rgb, el) {
+                    $(el).css('background-color', '#' + hex);
+                    $(el).colpickHide();
+                    setColor($(el).parents(".stlfile").attr("objectnum") * 1, '#' + hex);
+                }
+            });
+            if (operationType == 'report') {
+                //开启报告生成模式
+                onNeedGenerateReport();
+            }
+        }
+    </script>
+    <script src="/static/webgln/js/mfb.js"></script>
+    <div class="tanchu">
+        <div class="xyz">
+            <input type="hidden" class="single-slider sliderx" />
+            <input type="hidden" class="single-slider slidery" />
+            <input type="hidden" class="single-slider sliderz" />
+        </div>
+    </div>
+</body>
+
+</html>

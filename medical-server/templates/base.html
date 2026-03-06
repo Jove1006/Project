@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}医学数据管理系统{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260302c">
+</head>
+<body>
+<div class="layout">
+
+  <!-- 侧边栏（nav.js 渲染结果内联，加 Tera active_page 判断） -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="bi bi-hospital"></i></div>
+      <div class="logo-text">医学数据管理<small>存储管理系统</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">主功能</div>
+      <a class="nav-item{% if active_page == 'index' %} active{% endif %}" href="/">
+        <span class="nav-icon">&#xF4F6;</span>记录列表
+      </a>
+      <a class="nav-item{% if active_page == 'record-new' %} active{% endif %}" href="/records/new">
+        <span class="nav-icon">&#xF63F;</span>新增记录
+      </a>
+      <a class="nav-item{% if active_page == 'dashboard' %} active{% endif %}" href="/dashboard">
+        <span class="nav-icon">&#xF2CB;</span>统计看板
+      </a>
+      <div class="nav-section-label">系统设置</div>
+      <a class="nav-item{% if active_page == 'hospitals' %} active{% endif %}" href="/settings/hospitals">
+        <span class="nav-icon">&#xF474;</span>医院管理
+      </a>
+      <a class="nav-item{% if active_page == 'body-parts' %} active{% endif %}" href="/settings/body-parts">
+        <span class="nav-icon">&#xF506;</span>部位管理
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>服务运行中
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <header class="topbar">
+      {% block topbar %}
+      <span class="topbar-title">{% block topbar_title %}{% endblock %}</span>
+      {% block topbar_actions %}{% endblock %}
+      {% endblock %}
+    </header>
+
+    <div class="content">
+
+      <!-- Flash -->
+      <div class="flash" id="flash">
+        <i class="bi bi-check-circle-fill" id="flash-icon"></i>
+        <span id="flash-text">操作成功</span>
+      </div>
+
+      {% block content %}{% endblock %}
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+{% block modals %}{% endblock %}
+
+<script src="/static/js/main.js?v=20260302c"></script>
+<script src="/static/js/color-picker.js?v=20260302c"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

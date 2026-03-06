@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}新增记录 — 医学数据管理系统{% endblock %}
+
+{% block topbar %}
+  <a href="/" class="btn btn-ghost btn-icon btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <span class="topbar-breadcrumb">
+    <a href="/" style="color:#9ca3af">记录列表</a>
+    &nbsp;/&nbsp;<span>新增记录</span>
+  </span>
+{% endblock %}
+
+{% block content %}
+
+      <!-- 输入错误汇总提示 -->
+      <div class="validation-banner" id="val-banner">
+        <i class="bi bi-exclamation-circle-fill" style="font-size:16px;flex-shrink:0"></i>
+        <div>
+          <strong>请修正以下必填项：</strong>
+          <ul id="val-list"></ul>
+        </div>
+      </div>
+
+      <form id="main-form" action="/records" method="POST" enctype="multipart/form-data" onsubmit="return validateNewForm(event)" novalidate>
+
+        <!-- 基本信息 -->
+        <div class="card" style="padding:22px; margin-bottom:16px">
+          <div class="section-title">基本信息</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px">
+
+            <!-- 日期 -->
+            <div class="form-group" id="fg-date" style="margin-bottom:0">
+              <label class="form-label">检查日期 <span class="required">*</span></label>
+              <div class="date-group">
+                <select class="select" id="sel-year" name="year">
+                  <option value="">年份</option>
+                  {% for y in range(start=2020, end=2031) %}
+                  <option value="{{ y }}"{% if y == current_year %} selected{% endif %}>{{ y }}</option>
+                  {% endfor %}
+                </select>
+                <span class="date-sep">年</span>
+                <select class="select" id="sel-month" name="month" style="max-width:72px">
+                  <option value="">月</option>
+                  {% for m in range(start=1, end=13) %}
+                  <option value="{{ m }}"{% if m == current_month %} selected{% endif %}>{{ m }}</option>
+                  {% endfor %}
+                </select>
+                <span class="date-sep">月</span>
+                <select class="select" id="sel-day" name="day" style="max-width:72px">
+                  <option value="">日</option>
+                  {% for d in range(start=1, end=32) %}
+                  <option value="{{ d }}"{% if d == current_day %} selected{% endif %}>{{ d }}</option>
+                  {% endfor %}
+                </select>
+                <span class="date-sep">日</span>
+              </div>
+              <p class="form-error hidden" id="err-date"><i class="bi bi-exclamation-circle"></i>请选择完整的检查日期</p>
+            </div>
+
+            <!-- 医院 -->
+            <div class="form-group" id="fg-hospital" style="margin-bottom:0">
+              <label class="form-label">所属医院 <span class="required">*</span></label>
+              <select class="select" id="sel-hospital" name="hospital_id">
+                <option value="">── 请选择医院 ──</option>
+                {% for h in hospitals %}
+                <option value="{{ h.id }}">{{ h.hospital_name }}</option>
+                {% endfor %}
+              </select>
+              <p class="form-error hidden" id="err-hospital"><i class="bi bi-exclamation-circle"></i>请选择所属医院</p>
+            </div>
+
+            <!-- 部位 -->
+            <div class="form-group" id="fg-part" style="margin-bottom:0">
+              <label class="form-label">检查部位 <span class="required">*</span></label>
+              <select class="select" id="sel-part" name="body_part_id">
+                <option value="">── 请选择部位 ──</option>
+                {% for bp in body_parts %}
+                <option value="{{ bp.id }}">{{ bp.part_name }} ({{ bp.part_code }})</option>
+                {% endfor %}
+              </select>
+              <p class="form-error hidden" id="err-part"><i class="bi bi-exclamation-circle"></i>请选择检查部位</p>
+            </div>
+
+            <!-- 描述 -->
+            <div class="form-group" style="grid-column:1/-1; margin-bottom:0">
+              <label class="form-label">病例描述</label>
+              <textarea class="textarea" name="description" rows="3"
+                placeholder="请输入疾病的具体症状、诊断信息、手术记录等，方便后续查询和分析。"></textarea>
+              <p class="form-hint">可输入疾病症状、诊断结论、手术方案等（非必填）</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 文件上传 -->
+        <div class="card" style="padding:22px; margin-bottom:20px">
+          <div class="section-title">上传文件 <span style="font-weight:400; color:#9ca3af; text-transform:none; letter-spacing:0">（可选，支持多文件）</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+
+            <!-- 图像 -->
+            <div>
+              <div style="margin-bottom:8px; font-size:12px; font-weight:600; color:#374151; display:flex; align-items:center; gap:6px">
+                <span class="badge badge-image">图像</span> 医学图像
+              </div>
+              <div class="upload-zone" id="zone-image" onclick="document.getElementById('inp-image').click()">
+                <span class="icon"><i class="bi bi-file-earmark-medical"></i></span>
+                <div style="font-size:13px">点击选择或拖入文件</div>
+              </div>
+              <input type="file" id="inp-image" name="image_files" multiple accept=".dcm,.nii.gz" style="display:none"
+                onchange="handleFiles(this,'zone-image','list-image')">
+              <div class="upload-meta">
+                <span class="upload-meta-chip">.dcm</span>
+                <span class="upload-meta-chip">.nii.gz</span>
+                <span class="upload-meta-chip limit">单文件 ≤ 500 MB</span>
+              </div>
+              <div class="upload-progress-wrap" id="list-image"></div>
+            </div>
+
+            <!-- 模型 -->
+            <div>
+              <div style="margin-bottom:8px; font-size:12px; font-weight:600; color:#374151; display:flex; align-items:center; gap:6px">
+                <span class="badge badge-model">模型</span> 三维模型
+              </div>
+              <div class="upload-zone" id="zone-model" onclick="document.getElementById('inp-model').click()">
+                <span class="icon"><i class="bi bi-box"></i></span>
+                <div style="font-size:13px">点击选择或拖入文件</div>
+              </div>
+              <input type="file" id="inp-model" name="model_files" multiple accept=".stl" style="display:none"
+                onchange="handleFiles(this,'zone-model','list-model')">
+              <div class="upload-meta">
+                <span class="upload-meta-chip">.stl</span>
+                <span class="upload-meta-chip limit">单文件 ≤ 200 MB</span>
+              </div>
+              <div class="upload-progress-wrap" id="list-model"></div>
+            </div>
+
+            <!-- 标注 -->
+            <div>
+              <div style="margin-bottom:8px; font-size:12px; font-weight:600; color:#374151; display:flex; align-items:center; gap:6px">
+                <span class="badge badge-annot">标注</span> 标注数据
+              </div>
+              <div class="upload-zone" id="zone-annot" onclick="document.getElementById('inp-annot').click()">
+                <span class="icon"><i class="bi bi-tags"></i></span>
+                <div style="font-size:13px">点击选择或拖入文件</div>
+              </div>
+              <input type="file" id="inp-annot" name="annotation_files" multiple accept=".zip,.nii.gz" style="display:none"
+                onchange="handleFiles(this,'zone-annot','list-annot')">
+              <div class="upload-meta">
+                <span class="upload-meta-chip">.zip</span>
+                <span class="upload-meta-chip">.nii.gz</span>
+                <span class="upload-meta-chip limit">单文件 ≤ 500 MB</span>
+              </div>
+              <div class="upload-progress-wrap" id="list-annot"></div>
+            </div>
+
+            <!-- 报告 -->
+            <div>
+              <div style="margin-bottom:8px; font-size:12px; font-weight:600; color:#374151; display:flex; align-items:center; gap:6px">
+                <span class="badge badge-report">报告</span> 诊断报告
+              </div>
+              <div class="upload-zone" id="zone-report" onclick="document.getElementById('inp-report').click()">
+                <span class="icon"><i class="bi bi-file-text"></i></span>
+                <div style="font-size:13px">点击选择或拖入文件</div>
+              </div>
+              <input type="file" id="inp-report" name="report_files" multiple accept=".pdf,.docx,.xlsx,.md" style="display:none"
+                onchange="handleFiles(this,'zone-report','list-report')">
+              <div class="upload-meta">
+                <span class="upload-meta-chip">.pdf</span>
+                <span class="upload-meta-chip">.docx</span>
+                <span class="upload-meta-chip">.xlsx</span>
+                <span class="upload-meta-chip">.md</span>
+                <span class="upload-meta-chip limit">单文件 ≤ 50 MB</span>
+              </div>
+              <div class="upload-progress-wrap" id="list-report"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div style="display:flex; justify-content:flex-end; gap:10px">
+          <a href="/" class="btn btn-default"><i class="bi bi-x-lg"></i> 取消</a>
+          <button type="submit" class="btn btn-primary" style="padding:7px 24px">
+            <i class="bi bi-check-lg"></i> 保存记录
+          </button>
+        </div>
+
+      </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  function handleFiles(input, zoneId, listId) {
+    const zone = document.getElementById(zoneId);
+    const list = document.getElementById(listId);
+    const files = Array.from(input.files);
+    if (!files.length) return;
+
+    zone.innerHTML = `
+      <span class="icon"><i class="bi bi-check-circle" style="color:#16a34a"></i></span>
+      <div style="font-size:13px; color:#16a34a">已选择 ${files.length} 个文件</div>`;
+
+    list.innerHTML = files.map((f, i) => `
+      <div class="upload-file-item" id="item-${zoneId}-${i}">
+        <span class="file-icon" style="color:#4f46e5"><i class="bi bi-file-earmark"></i></span>
+        <span class="file-name" title="${f.name}">${f.name}</span>
+        <span class="file-size">${fmtSize(f.size)}</span>
+        <span class="file-status">待上传</span>
+      </div>`).join('');
+  }
+
+  // 拖拽支持
+  ['zone-image','zone-model','zone-annot','zone-report'].forEach(zoneId => {
+    const zone = document.getElementById(zoneId);
+    if (!zone) return;
+    const inputMap = { 'zone-image':'inp-image','zone-model':'inp-model','zone-annot':'inp-annot','zone-report':'inp-report' };
+    const listMap  = { 'zone-image':'list-image','zone-model':'list-model','zone-annot':'list-annot','zone-report':'list-report' };
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const inp = document.getElementById(inputMap[zoneId]);
+      inp.files = e.dataTransfer.files;
+      handleFiles(inp, zoneId, listMap[zoneId]);
+    });
+  });
+
+  function validateNewForm(e) {
+    const year  = document.getElementById('sel-year').value;
+    const month = document.getElementById('sel-month').value;
+    const day   = document.getElementById('sel-day').value;
+    const hosp  = document.getElementById('sel-hospital').value;
+    const part  = document.getElementById('sel-part').value;
+    const errors = [];
+
+    ['fg-date','fg-hospital','fg-part'].forEach(id => document.getElementById(id).classList.remove('has-error'));
+    ['err-date','err-hospital','err-part'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+    if (!year || !month || !day) {
+      errors.push('检查日期（年、月、日均需选择）');
+      document.getElementById('fg-date').classList.add('has-error');
+      document.getElementById('err-date').classList.remove('hidden');
+    }
+    if (!hosp) {
+      errors.push('所属医院（必填）');
+      document.getElementById('fg-hospital').classList.add('has-error');
+      document.getElementById('err-hospital').classList.remove('hidden');
+    }
+    if (!part) {
+      errors.push('检查部位（必填）');
+      document.getElementById('fg-part').classList.add('has-error');
+      document.getElementById('err-part').classList.remove('hidden');
+    }
+
+    if (errors.length) {
+      const banner = document.getElementById('val-banner');
+      const list   = document.getElementById('val-list');
+      list.innerHTML = errors.map(m => `<li>${m}</li>`).join('');
+      banner.classList.add('show');
+      banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      e.preventDefault();
+      return false;
+    }
+    document.getElementById('val-banner').classList.remove('show');
+    return true;
+  }
+</script>
+{% endblock %}

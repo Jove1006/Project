@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>记录列表 — 医学数据管理系统</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar" id="sidebar-mount" data-page="index"></aside>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">记录列表</span>
+      <button class="btn btn-default btn-sm" onclick="location.href='record-new.html'">
+        <i class="bi bi-download"></i> 导出 Excel
+      </button>
+      <a href="record-new.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg"></i> 新增记录
+      </a>
+    </header>
+
+    <div class="content">
+
+      <!-- Flash -->
+      <div class="flash success" id="flash">
+        <i class="bi bi-check-circle-fill"></i>
+        <span id="flash-text">操作成功</span>
+      </div>
+
+      <!-- 筛选栏 -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">年份</span>
+            <select class="select" style="width:90px">
+              <option>全部</option>
+              <option selected>2026</option>
+              <option>2025</option>
+              <option>2024</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">月份</span>
+            <select class="select" style="width:78px">
+              <option>全部</option>
+              <option>1</option><option>2</option><option selected>3</option>
+              <option>4</option><option>5</option><option>6</option>
+              <option>7</option><option>8</option><option>9</option>
+              <option>10</option><option>11</option><option>12</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">医院</span>
+            <select class="select" style="width:148px">
+              <option>全部医院</option>
+              <option>北京协和医院</option>
+              <option>上海瑞金医院</option>
+              <option selected>广州中山医院</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">部位</span>
+            <select class="select" style="width:108px">
+              <option>全部部位</option>
+              <option selected>膝关节</option>
+              <option>手腕</option>
+              <option>踝关节</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">关键字</span>
+            <input type="text" class="input" placeholder="搜索描述…" style="width:130px" value="半月板">
+          </div>
+          <div class="filter-group" style="flex-direction:row; align-items:flex-end; gap:6px; margin-top:auto">
+            <button class="btn btn-primary btn-sm"><i class="bi bi-search"></i> 搜索</button>
+            <a href="index.html" class="btn btn-ghost btn-sm"><i class="bi bi-x-lg"></i> 重置</a>
+          </div>
+          <div style="flex:1"></div>
+          <div class="filter-group" style="flex-direction:row; align-items:flex-end; gap:6px; margin-top:auto">
+            <button class="btn btn-default btn-sm"><i class="bi bi-upload"></i> 批量导入</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 工具栏 -->
+      <div style="display:flex; align-items:center; margin-bottom:10px">
+        <span style="font-size:12.5px; color:#9ca3af">
+          共 <strong style="color:#374151">47</strong> 条记录，当前筛选 <strong style="color:#374151">12</strong> 条
+        </span>
+        <div style="flex:1"></div>
+        <button class="btn btn-danger btn-sm" id="batch-delete-btn" disabled
+            style="opacity:.4; cursor:not-allowed" onclick="confirmDelete('选中的 2 条记录')">
+          <i class="bi bi-trash"></i> 批量删除
+        </button>
+      </div>
+
+      <!-- 表格 -->
+      <div class="card" style="overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="36"><input type="checkbox" id="check-all" style="cursor:pointer" onchange="toggleAll(this)"></th>
+                <th class="th-sort" onclick="sortBy('code', this)">
+                  编号
+                  <span class="sort-icon"><span class="up"></span><span class="down"></span></span>
+                </th>
+                <th class="th-sort desc" onclick="sortBy('date', this)">
+                  日期
+                  <span class="sort-icon"><span class="up"></span><span class="down"></span></span>
+                </th>
+                <th class="th-sort" onclick="sortBy('hospital', this)">
+                  医院
+                  <span class="sort-icon"><span class="up"></span><span class="down"></span></span>
+                </th>
+                <th class="th-sort" onclick="sortBy('part', this)">
+                  部位
+                  <span class="sort-icon"><span class="up"></span><span class="down"></span></span>
+                </th>
+                <th>文件</th>
+                <th>描述</th>
+                <th width="115">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" style="cursor:pointer"></td>
+                <td><span class="record-code">MR-2026-000012</span></td>
+                <td style="white-space:nowrap; color:#6b7280">2026-02-25</td>
+                <td>广州中山医院</td>
+                <td><span class="part-badge part-knee">膝关节</span></td>
+                <td>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap">
+                    <span class="badge badge-image">图 3</span>
+                    <span class="badge badge-model">模 1</span>
+                  </div>
+                </td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#6b7280">
+                  半月板损伤术前影像，包含MRI序列
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="record-detail.html" class="btn btn-ghost btn-icon btn-sm" title="查看">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="record-edit.html" class="btn btn-ghost btn-icon btn-sm" title="编辑">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-ghost btn-icon btn-sm" title="删除"
+                      onclick="confirmDelete('MR-2026-000012')"
+                      style="color:#ef4444">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" style="cursor:pointer"></td>
+                <td><span class="record-code">MR-2026-000011</span></td>
+                <td style="white-space:nowrap; color:#6b7280">2026-02-24</td>
+                <td>北京协和医院</td>
+                <td><span class="part-badge part-hand">手腕</span></td>
+                <td>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap">
+                    <span class="badge badge-image">图 5</span>
+                    <span class="badge badge-annot">注 1</span>
+                    <span class="badge badge-report">报 1</span>
+                  </div>
+                </td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#6b7280">
+                  桡骨远端骨折复位后随访影像
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="record-detail.html" class="btn btn-ghost btn-icon btn-sm"><i class="bi bi-eye"></i></a>
+                    <a href="record-edit.html" class="btn btn-ghost btn-icon btn-sm"><i class="bi bi-pencil"></i></a>
+                    <button class="btn btn-ghost btn-icon btn-sm" style="color:#ef4444" onclick="confirmDelete('MR-2026-000011')"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" style="cursor:pointer"></td>
+                <td><span class="record-code">MR-2026-000010</span></td>
+                <td style="white-space:nowrap; color:#6b7280">2026-02-22</td>
+                <td>上海瑞金医院</td>
+                <td><span class="part-badge part-ankle">踝关节</span></td>
+                <td>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap">
+                    <span class="badge badge-image">图 2</span>
+                    <span class="badge badge-model">模 2</span>
+                    <span class="badge badge-report">报 1</span>
+                  </div>
+                </td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#6b7280">
+                  踝关节扭伤三维重建数据
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="record-detail.html" class="btn btn-ghost btn-icon btn-sm"><i class="bi bi-eye"></i></a>
+                    <a href="record-edit.html" class="btn btn-ghost btn-icon btn-sm"><i class="bi bi-pencil"></i></a>
+                    <button class="btn btn-ghost btn-icon btn-sm" style="color:#ef4444" onclick="confirmDelete('MR-2026-000010')"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" style="cursor:pointer"></td>
+                <td><span class="record-code">MR-2026-000009</span></td>
+                <td style="white-space:nowrap; color:#6b7280">2026-02-20</td>
+                <td>广州中山医院</td>
+                <td><span class="part-badge part-pelvis">骨盆</span></td>
+                <td>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap">
+                    <span class="badge badge-image">图 8</span>
+                  </div>
+                </td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#d1d5db">—</td>
+                <td>
+                  <div class="btn-group">
+                    <a href="record-detail.html" class="btn btn-ghost btn-icon btn-sm"><i class="bi bi-eye"></i></a>
+                    <a href="record-edit.html" class="btn btn-ghost btn-icon btn-sm"><i class="bi bi-pencil"></i></a>
+                    <button class="btn btn-ghost btn-icon btn-sm" style="color:#ef4444" onclick="confirmDelete('MR-2026-000009')"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页 -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:1px solid #f0f2f5; flex-wrap:wrap; gap:10px">
+          <span style="font-size:12.5px; color:#9ca3af">显示第 1–4 条，共 <strong style="color:#374151">12</strong> 条</span>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div class="pagination">
+              <button class="page-btn disabled"><i class="bi bi-chevron-left"></i></button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <span style="font-size:13px; color:#9ca3af; padding:0 2px">…</span>
+              <button class="page-btn">6</button>
+              <button class="page-btn"><i class="bi bi-chevron-right"></i></button>
+            </div>
+            <div class="page-jump">
+              跳至
+              <input id="page-jump-input" type="number" min="1" max="6" placeholder="">
+              页
+              <button class="btn btn-default btn-sm" style="padding:4px 10px" onclick="doPageJump()">跳转</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- 删除确认 -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">确认删除</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0; font-size:13.5px; color:#374151">
+        确定要删除记录 <strong id="delete-target" style="font-family:monospace; color:#4f46e5"></strong> 及其所有关联文件吗？
+      </p>
+      <p style="margin:10px 0 0; font-size:12px; color:#ef4444">
+        <i class="bi bi-exclamation-triangle me-1"></i>此操作不可恢复。
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal()">取消</button>
+      <button class="btn btn-danger" onclick="doDelete()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+  // ── Delete modal ──
+  function confirmDelete(code) {
+    document.getElementById('delete-target').textContent = code;
+    document.getElementById('modal-delete').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('modal-delete').classList.remove('open');
+  }
+  function doDelete() {
+    closeModal();
+    showFlash('record_deleted');
+  }
+  function showFlash(key) {
+    const msgs = { record_deleted: '记录已删除', batch_deleted: '已批量删除选中记录' };
+    const f = document.getElementById('flash');
+    document.getElementById('flash-text').textContent = msgs[key] || '操作成功';
+    f.style.display = 'flex';
+    setTimeout(() => { f.style.display = 'none'; }, 3000);
+  }
+
+  // ── Checkbox ──
+  function toggleAll(el) {
+    document.querySelectorAll('.row-check').forEach(c => {
+      c.checked = el.checked;
+      c.closest('tr').classList.toggle('selected', el.checked);
+    });
+    updateBatchBtn();
+  }
+  function updateBatchBtn() {
+    const checked = document.querySelectorAll('.row-check:checked').length;
+    const btn = document.getElementById('batch-delete-btn');
+    if (checked > 0) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.textContent = `批量删除 (${checked})`;
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '.4';
+      btn.style.cursor = 'not-allowed';
+      btn.textContent = '批量删除';
+    }
+  }
+
+  // ── Sort ──
+  let sortState = { col: 'date', dir: 'desc' };
+  function sortBy(col, th) {
+    document.querySelectorAll('.th-sort').forEach(t => t.classList.remove('asc','desc'));
+    if (sortState.col === col) {
+      sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortState = { col, dir: 'asc' };
+    }
+    th.classList.add(sortState.dir);
+    /* In production this triggers an API call; here just visual feedback */
+  }
+
+  // ── Page jump ──
+  function doPageJump() {
+    const v = parseInt(document.getElementById('page-jump-input').value);
+    if (!v || v < 1 || v > 6) {
+      document.getElementById('page-jump-input').style.borderColor = '#f87171';
+      setTimeout(() => { document.getElementById('page-jump-input').style.borderColor = ''; }, 1500);
+      return;
+    }
+    /* In production redirect to ?page=v; here just visual feedback */
+    document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+    showFlash('record_deleted'); // reuse flash just to demo
+  }
+
+  // init sort indicator
+  document.querySelector('.th-sort.desc') && (sortState = { col: 'date', dir: 'desc' });
+</script>
+</body>
+</html>
